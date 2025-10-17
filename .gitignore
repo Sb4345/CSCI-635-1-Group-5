@@ -1,2 +1,6 @@
 treevenv/
+venv/
+.venv/
+.vscode/
 *.data
+
