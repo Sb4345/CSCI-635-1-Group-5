@@ -1,2 +1,6 @@
-treevenv/
+venv/
 *.data
+.vscode/
+.venv/
+__pycache__/
+*.pyc
