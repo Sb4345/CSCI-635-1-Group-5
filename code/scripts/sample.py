@@ -1,6 +1,7 @@
 from sklearn.model_selection import StratifiedShuffleSplit
 import pandas as pd
 
+
 def sample_stratify(data, label_col, n_samples=500, rand_state=42):
     """
     Generate stratified samples from the dataset using
@@ -11,6 +12,21 @@ def sample_stratify(data, label_col, n_samples=500, rand_state=42):
         strat_test_set = data.iloc[test_index]
 
     return strat_test_set
+
+
+def top_pca(data, n_components=6):
+    """
+    Perform PCA on the dataset and return the top n_components.
+    """
+    from sklearn.decomposition import PCA
+
+    pca = PCA(n_components=n_components)
+    pca.fit(data)
+    principal_components = pca.transform(data)
+    pc_df = pd.DataFrame(data=principal_components,
+                         columns=[f'PC_{i+1}' for i in range(n_components)])
+    return pc_df, pca
+
 
 def main():
     from sklearn.datasets import load_iris
