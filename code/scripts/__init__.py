@@ -1,1 +1,1 @@
-from .histogram import plot_histogram
+from .plotters import plot_histogram
