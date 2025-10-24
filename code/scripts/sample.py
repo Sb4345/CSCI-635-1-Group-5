@@ -38,6 +38,10 @@ def main():
 
     print("Stratified Reduced Set:\n", reduced['target'].value_counts())
 
+    num_components = 3
+    pc_df, pca_model = top_pca(reduced.drop(columns=['target']), n_components=num_components)
+    print(f"\nTop {num_components} Principal Components:\n", pc_df.head())
+    print("PCA Components:\n", pca_model.components_)
 
 if __name__ == "__main__":
     main()
