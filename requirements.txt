@@ -2,3 +2,6 @@ matplotlib
 pandas
 scikit-learn
 numpy
+imbalanced-learn
+ipykernel
+tensorflow
