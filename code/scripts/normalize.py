@@ -1,4 +1,4 @@
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import sklearn.preprocessing as preproc
 import numpy as np
 
 def normalize_data(data_x, method='standard'):
@@ -13,11 +13,13 @@ def normalize_data(data_x, method='standard'):
     array-like: The normalized data.
     """
     if method == 'standard':
-        scaler = StandardScaler()
+        scaler = preproc.StandardScaler()
     elif method == 'minmax':
-        scaler = MinMaxScaler()
+        scaler = preproc.MinMaxScaler()
+    elif method == 'l2':
+        scaler = preproc.Normalizer(norm='l2')
     else:
-        raise ValueError("Unsupported normalization method. Use 'standard' or 'minmax'.")
+        raise ValueError("Unsupported normalization method. Use 'standard', 'minmax', or 'l2'.")
 
     normalized_data = scaler.fit_transform(data_x)
     return scaler, normalized_data
