@@ -1,5 +1,8 @@
 from sklearn.model_selection import StratifiedShuffleSplit
 import pandas as pd
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+
 
 
 def sample_stratify(data, label_col, n_samples=500, rand_state=42):
@@ -26,6 +29,23 @@ def top_pca(data, n_components=6):
     pc_df = pd.DataFrame(data=principal_components,
                          columns=[f'PC_{i+1}' for i in range(n_components)])
     return pc_df, pca
+
+
+def resample_data(x, y, target_over=None, target_under=None, rand_state=42):
+    """
+    Resample the dataset using SMOTE for oversampling and RandomUnderSampler for undersampling.
+    """
+    if target_over:
+        smote = SMOTE(sampling_strategy=target_over, random_state=rand_state)
+        x_resampled, y_resampled = smote.fit_resample(x, y)
+    else:
+        x_resampled, y_resampled = x, y
+
+    if target_under:
+        rus = RandomUnderSampler(sampling_strategy=target_under, random_state=rand_state)
+        x_resampled, y_resampled = rus.fit_resample(x_resampled, y_resampled)
+
+    return x_resampled, y_resampled
 
 
 def main():
