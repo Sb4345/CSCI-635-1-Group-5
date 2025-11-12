@@ -2,5 +2,9 @@ treevenv/
 venv/
 .venv/
 .vscode/
+.venv/
+__pycache__/
+*.pyc
+data/processed/
 *.data
 
