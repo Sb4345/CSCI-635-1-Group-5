@@ -269,7 +269,7 @@ class MLPModel:
             return tuple(results)
 
 
-    def visualize_history(self, history: keras.callbacks.History) -> None:
+    def visualize_history(self, history: Optional[keras.callbacks.History] = None) -> None:
         """Visualize training history (loss and accuracy) using subplots."""
         import matplotlib.pyplot as plt
 
@@ -288,8 +288,8 @@ class MLPModel:
         ax1.set_title("Model Accuracy")
 
         # Plot training & validation loss values
-        ax2.plot(history.history["loss"], label="Train loss", color="green")
-        ax2.plot(history.history["val_loss"], label="Val loss", color="red")
+        ax2.plot(history.history["loss"], label="Train loss", color="blue")
+        ax2.plot(history.history["val_loss"], label="Val loss", color="orange")
         ax2.set_xlabel("Epoch")
         ax2.set_ylabel("Loss")
         ax2.legend(loc="upper left")
