@@ -22,9 +22,9 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 from tensorflow import keras
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, InputLayer
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras import Sequential # type: ignore
+from tensorflow.keras.layers import Dense, InputLayer # type: ignore
+from tensorflow.keras.callbacks import EarlyStopping # type: ignore
 
 
 class MLPModel:
@@ -131,19 +131,21 @@ class MLPModel:
         self.x_test = x_arr
         self.y_test = y_arr
 
-    def build_model(self) -> keras.Model:
+    def build_model(self, learning_rate: Optional[float] = None) -> keras.Model:
         """Constructs the Keras Sequential model and compiles it.
 
         The architecture mirrors the notebook: Input -> 256 relu -> 256 relu -> softmax
         """
         model = Sequential([
-            InputLayer(input_shape=(self.input_dim,)),
-            Dense(256, activation="relu"),
-            Dense(256, activation="relu"),
+            InputLayer(shape=(self.input_dim,)),
+            Dense(512, activation="relu"),
+            Dense(512, activation="relu"),
             Dense(self.num_classes, activation="softmax"),
         ])
 
-        optimizer = keras.optimizers.Adam(learning_rate=self.learning_rate)
+        if learning_rate is None:
+            learning_rate = self.learning_rate
+        optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
         model.compile(
             optimizer=optimizer,
             loss="sparse_categorical_crossentropy",
@@ -166,26 +168,36 @@ class MLPModel:
         patience: int = 5,
         verbose: int = 1,
         callbacks: Optional[list] = None,
+        weights: Optional[dict] = None,
     ) -> Optional[keras.callbacks.History]:
         """Train the model using stored training and validation sets.
 
+        If weights are not provided, even weighting is used.
         Returns Keras History.
         """
+        # Build model if not already built
         if self.model is None:
             self.build_model()
 
+        # Data and state checks
         if self.x_train is None or self.y_train is None:
             raise ValueError("Training data not set. Call set_train(x, y) first.")
+
+        val_data = None
+        if self.x_val is not None and self.y_val is not None:
+            val_data = (self.x_val, self.y_val)
 
         if callbacks is None:
             callbacks = [
                 EarlyStopping(monitor="val_loss", mode="min", patience=patience, verbose=1)
             ]
 
-        val_data = None
-        if self.x_val is not None and self.y_val is not None:
-            val_data = (self.x_val, self.y_val)
+        # Use even weighting if weights are not provided
+        if weights is None:
+            unique_classes = np.unique(self.y_train)
+            weights = {cls: 1.0 for cls in unique_classes}
 
+        # Training
         history = self.model.fit(
             self.x_train,
             self.y_train,
@@ -194,6 +206,7 @@ class MLPModel:
             batch_size=batch_size,
             callbacks=callbacks,
             verbose=verbose,
+            class_weight=weights,
         )
         self.history = history
         return history
@@ -219,7 +232,7 @@ class MLPModel:
             arr = arr.reshape(1, -1)
             single_input = True
 
-        preds = self.model.predict(arr)
+        preds = self.model.predict(arr, verbose=0)
         labels = np.argmax(preds, axis=1).astype(int)
 
         if single_input:
@@ -306,6 +319,7 @@ def main():
     from sklearn.preprocessing import StandardScaler
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import matthews_corrcoef, classification_report, confusion_matrix
+    from sklearn.utils import compute_class_weight
 
     iris = load_iris()
     iris_x = iris.data
@@ -317,13 +331,16 @@ def main():
     x_train, x_test, y_train, y_test = train_test_split(iris_x_scaled, iris_y, test_size=0.2, random_state=1)
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=1)
 
+    train_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+    class_weight_dict = dict(enumerate(train_weights))
+
     mlp = MLPModel(input_dim=iris_x.shape[1], num_classes=len(set(iris_y)), learning_rate=1e-3)
     mlp.set_train(x_train, y_train)
     mlp.set_val(x_val, y_val)
     mlp.set_test(x_test, y_test)
 
     mlp.build_model()
-    history = mlp.train(epochs=100, verbose=0)
+    history = mlp.train(epochs=100, verbose=0, weights=class_weight_dict)
     mlp.visualize_history(history)
 
     loss, acc = mlp.evaluate()
