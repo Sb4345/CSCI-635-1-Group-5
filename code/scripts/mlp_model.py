@@ -1,10 +1,9 @@
 """MLP model wrapper for training and prediction.
 
-Provides a class-based implementation of the perceptron (MLP) model that
-was used in `mlp_model.ipynb`. The class accepts training, validation and
-test datasets (as numpy arrays or similar), exposes setters to change them,
-methods to build and train the model, evaluate on a dataset, and predict a
-single label for an input feature vector.
+Provides a class-based implementation of a perceptron (MLP) model.
+This class accepts training, validation and test datasets (as numpy arrays or similar), 
+methods to build and train the model, evaluate on a dataset,
+and predict labels for new samples individually or in batches.
 
 Usage (example):
 	m = MLPModel(input_dim=54, num_classes=7)
@@ -13,9 +12,6 @@ Usage (example):
 	m.build_model()
 	history = m.train(epochs=50)
 	label = m.predict_single(x_sample)
-
-This module intentionally keeps the API small and compatible with the
-notebook flow that performs scaling/reshaping outside this class.
 """
 
 from typing import Optional, Tuple, Union
@@ -25,6 +21,8 @@ from tensorflow import keras
 from tensorflow.keras import Sequential # type: ignore
 from tensorflow.keras.layers import Dense, InputLayer # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping # type: ignore
+
+from evaluate import evaluate as evaluate_model
 
 
 class MLPModel:
@@ -219,7 +217,7 @@ class MLPModel:
           - multiple samples: 2D array-like with shape (n_samples, n_features)
 
         Returns:
-          - int: predicted label if a single sample provided
+          - int: predicted label of a single sample provided
           - numpy.ndarray of ints: predicted labels for multiple samples
         """
         if self.model is None:
@@ -262,18 +260,16 @@ class MLPModel:
         if self.model is None:
             raise ValueError("Model not built or loaded. Call build_model() before evaluate.")
 
-        if x is None or y is None:
+        if x is None and y is None:
             x = self.x_test
             y = self.y_test
-
-        if x is None or y is None:
+        elif x is None or y is None:
             raise ValueError(
-                "No evaluation data available. Provide (x,y) or set test data with set_test()."
+                "Both x and y must be provided, or neither to use the stored test data set."
             )
 
         if metrics is None:
-            loss, acc = self.model.evaluate(x, y, verbose=0)
-            return float(loss), float(acc)
+            return evaluate_model(y, self.predict(x))
         else:
             y_pred = self.predict(x)
             results = []
@@ -320,20 +316,25 @@ def main():
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import matthews_corrcoef, classification_report, confusion_matrix
     from sklearn.utils import compute_class_weight
+    import matplotlib.pyplot as plt
 
+    # Load iris dataset
     iris = load_iris()
     iris_x = iris.data
     iris_y = iris.target
 
+    # Standardize features
     scaler = StandardScaler()
     iris_x_scaled = scaler.fit_transform(iris_x)
 
+    # Split data
     x_train, x_test, y_train, y_test = train_test_split(iris_x_scaled, iris_y, test_size=0.2, random_state=1)
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=1)
 
     train_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weight_dict = dict(enumerate(train_weights))
 
+    # Initialize and train MLP model
     mlp = MLPModel(input_dim=iris_x.shape[1], num_classes=len(set(iris_y)), learning_rate=1e-3)
     mlp.set_train(x_train, y_train)
     mlp.set_val(x_val, y_val)
@@ -343,16 +344,17 @@ def main():
     history = mlp.train(epochs=100, verbose=0, weights=class_weight_dict)
     mlp.visualize_history(history)
 
-    loss, acc = mlp.evaluate()
-    print(f"Test Loss: {loss:.4f}, Test Accuracy: {acc:.4f}")
-    mcc, conf, class_report = mlp.evaluate(
-        x_test,
-        y_test,
-        metrics=[matthews_corrcoef, confusion_matrix, classification_report]
-    )
+    # Evaluate model
+    cmd, mcList, cr, mcc = mlp.evaluate()
+    cmd.plot()
     print(f"Matthews Correlation Coefficient: {mcc:.4f}")
-    print("Confusion Matrix:\n", conf)
-    print("Classification Report:\n", class_report)
+    print("Classification Report:\n", cr)
+    print("Confusion Matrix:\n", mlp.evaluate(metrics=[confusion_matrix]))
+
+    for i, mcmd in enumerate(mcList):
+        mcmd.plot()
+        plt.title(f"Confusion Matrix for Class {i}")
+    plt.show()
 
 
 if __name__ == "__main__":
