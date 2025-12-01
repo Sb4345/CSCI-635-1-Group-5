@@ -1,0 +1,15 @@
+Code Documentation Links:
+	- https://scikit-learn.org/stable/index.html
+	- https://imbalanced-learn.org/stable/
+	- https://www.tensorflow.org/
+
+Class Notes References:
+	- Week 3 Logistic Regression
+	- Week 4 Ensemble Models
+	- Week 4 KNN-1
+	- Week 4 KNN-2
+	- Week 4 DT
+	- Week 5 Supervised Model Evaulation
+	- Week 6 Neural Network-1
+	- Week 7 Backpropagation
+	- Week 9 Regularizations
