@@ -23,7 +23,7 @@ from tensorflow.keras import Sequential # type: ignore
 from tensorflow.keras.layers import Dense, InputLayer # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping # type: ignore
 
-from evaluate import evaluate as evaluate_model
+from scripts.evaluate import evaluate as evaluate_model
 
 
 class MLPModel:
