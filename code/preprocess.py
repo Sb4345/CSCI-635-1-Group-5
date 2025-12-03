@@ -5,6 +5,18 @@ import scripts
 
 DATADIR = '~/Classes/CSCI635/CSCI-635-1-Group-5/data/'
 
+"""
+Training counts before resampling:
+Cover_Type
+0    169472
+1    226640
+2     28603
+3      2198
+4      7594
+5     13894
+6     16408
+"""
+
 # Global random seed
 rand_seed = 42
 
@@ -23,7 +35,9 @@ def load_data(dataPath, colNames, targetCol, nSamples=None):
     return X, y
 
 
-def main(path=DATADIR):
+def main(path=DATADIR, dst_name='tree'):
+    import os
+
     # Load the data
     tree_cols = ['Elevation', 'Aspect', 'Slope', 'Horizontal_To_Hydrology',
                 'Vertical_To_Hydrology', 'Horizontal_To_Roadways',
@@ -32,7 +46,8 @@ def main(path=DATADIR):
                 [f'Wilderness_Area_{i}' for i in range(4)] + \
                 [f'Soil_Type_{i}' for i in range(40)] + \
                 ['Cover_Type']
-    X_tree, y_tree = load_data(f'{DATADIR}covtype.data', tree_cols, 'Cover_Type', nSamples=100000)
+    data_path = os.path.join(path, 'covtype.data')
+    X_tree, y_tree = load_data(data_path, tree_cols, 'Cover_Type')
 
     y_tree -= 1  # make labels zero-indexed
 
@@ -46,8 +61,10 @@ def main(path=DATADIR):
     print(y_train.value_counts())
 
     # Resample training data to address class imbalance
-    target_over = {3: 1000}
-    target_under = {0: 6000, 1: 6000}
+    target_over = {}
+    # target_over = {3: 6000}
+    # target_under = {0: 35000, 1: 35000}
+    target_under = {1: 35000}
 
     x_train_resampled, y_train_resampled = scripts.resample_data(x_train, y_train,
                                                                 target_over=target_over,
@@ -65,25 +82,32 @@ def main(path=DATADIR):
     print(f"Test set size: {x_test.shape[0]}")
 
     # save processed data to csv files
+    # create processed directory if it doesn't exist
+    os.makedirs(f'{path}/processed/', exist_ok=True)
     train_data = pd.DataFrame(x_train, columns=tree_cols[:-1])
     train_data['Cover_Type'] = y_train.values
-    train_data.to_csv(f'{DATADIR}/processed/tree_train.csv', index=False)
+    train_data.to_csv(f'{path}/processed/{dst_name}_train.csv', index=False)
 
     val_data = pd.DataFrame(x_val, columns=tree_cols[:-1])
     val_data['Cover_Type'] = y_val.values
-    val_data.to_csv(f'{DATADIR}/processed/tree_val.csv', index=False)
-
+    val_data.to_csv(f'{path}/processed/{dst_name}_val.csv', index=False)
     test_data = pd.DataFrame(x_test, columns=tree_cols[:-1])
     test_data['Cover_Type'] = y_test.values
-    test_data.to_csv(f'{DATADIR}/processed/tree_test.csv', index=False)
+    test_data.to_csv(f'{path}/processed/{dst_name}_test.csv', index=False)
 
-    print(f"Preprocessed data saved to {DATADIR}/processed/")
+    print(f"Preprocessed data saved to {path}/processed/")
 
 
 if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("data_path", nargs="+", default=DATADIR, help="Path to data directory")
+    parser.add_argument("--data_path",
+                        nargs="+",
+                        default=DATADIR,
+                        help="Path to data directory")
+    parser.add_argument("--dst_name",
+                        default='tree',
+                        help="Destination prefix for processed files")
     args = parser.parse_args()
-    main(path=str(args.data_path[0]))
+    main(path=str(args.data_path[0]), dst_name=args.dst_name)
