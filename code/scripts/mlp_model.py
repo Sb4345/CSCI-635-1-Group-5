@@ -331,6 +331,11 @@ class MLPModel:
         """Save the model to the specified filepath."""
         if self.model is None:
             raise ValueError("Model not built or loaded. Call build_model() before export.")
+
+        # ensure directory exists
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+        
         self.model.save(os.path.join(filepath, f'{prefix}_trained.keras'))
 
 
