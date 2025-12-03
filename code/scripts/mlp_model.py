@@ -22,7 +22,7 @@ from tensorflow.keras import Sequential # type: ignore
 from tensorflow.keras.layers import Dense, InputLayer # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping # type: ignore
 
-from evaluate import evaluate as evaluate_model
+from scripts.evaluate import evaluate as evaluate_model
 
 
 class MLPModel:
@@ -254,8 +254,18 @@ class MLPModel:
                  y: Optional[np.ndarray] = None,
                  metrics: Optional[list] = None) -> Tuple[float, float]:
         """Evaluate model on provided (x,y) or stored test set.
+        Parameters:
+        x (np.ndarray, optional): Feature array to evaluate on. If None, uses stored test set.
+        y (np.ndarray, optional): Label array to evaluate on. If None, uses stored test set.
+        metrics (list, optional): List of metric functions to compute.
 
-        Returns (loss, accuracy) or a tuple of metric results.
+        Returns:
+        Tuple[float, float]: Returns a tuple of metric results in the order provided.
+        If no metrics are provided, returns confusion matrix, multilabel confusion matrices,
+        classification report, and MCC score as per the evaluate_model function.
+
+        Raises:
+        ValueError: If only one of x or y is provided, or if no model is built/loaded.
         """
         if self.model is None:
             raise ValueError("Model not built or loaded. Call build_model() before evaluate.")
