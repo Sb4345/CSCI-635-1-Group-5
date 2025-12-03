@@ -5,3 +5,5 @@ numpy
 imbalanced-learn
 ipykernel
 tensorflow
+shap
+
