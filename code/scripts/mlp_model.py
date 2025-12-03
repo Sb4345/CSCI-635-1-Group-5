@@ -14,6 +14,7 @@ Usage (example):
 	label = m.predict_single(x_sample)
 """
 
+import os
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -62,8 +63,10 @@ class MLPModel:
         self.x_test: Optional[np.ndarray] = None
         self.y_test: Optional[np.ndarray] = None
 
+        # model and training history
         self.model: Optional[keras.Model] = None
         self.history: Optional[keras.callbacks.History] = None
+
 
     def _check_features(self, x: np.ndarray) -> None:
         """Internal method to validate feature array shape."""
@@ -76,6 +79,7 @@ class MLPModel:
             raise ValueError(
                 f"Feature dimension mismatch: expected {self.input_dim} features, got {x_arr.shape[1]}"
             )
+
     
     def _check_labels(self, y: np.ndarray) -> None:
         """Internal method to validate label array shape."""
@@ -84,6 +88,7 @@ class MLPModel:
             raise ValueError(
                 f"Labels must be a 1D array of length n_samples; got ndim={y_arr.ndim}"
             )
+
     
     def _check_labels_match(self, x_arr: np.ndarray, y_arr: np.ndarray) -> None:
         """Internal method to validate that features and labels have matching sample counts."""
@@ -92,11 +97,13 @@ class MLPModel:
                 f"Number of samples in x and y must match; got {x_arr.shape[0]} and {y_arr.shape[0]}"
             )
 
+
     def _check_data_input(self, x: np.ndarray, y: np.ndarray) -> None:
         """Internal method to validate feature and label arrays."""
         self._check_features(x)
         self._check_labels(y)
         self._check_labels_match(x, y)
+
 
     # dataset setters
     def set_train(self, x: np.ndarray, y: np.ndarray) -> None:
@@ -109,6 +116,7 @@ class MLPModel:
         self.x_train = x_arr
         self.y_train = y_arr
 
+
     def set_val(self, x: np.ndarray, y: np.ndarray) -> None:
         """Set validation data (basic validation performed)."""
         x_arr = np.asarray(x)
@@ -119,6 +127,7 @@ class MLPModel:
         self.x_val = x_arr
         self.y_val = y_arr
 
+
     def set_test(self, x: np.ndarray, y: np.ndarray) -> None:
         """Set test data (basic validation performed)."""
         x_arr = np.asarray(x)
@@ -128,6 +137,7 @@ class MLPModel:
 
         self.x_test = x_arr
         self.y_test = y_arr
+
 
     def build_model(self, learning_rate: Optional[float] = None) -> keras.Model:
         """Constructs the Keras Sequential model and compiles it.
@@ -153,11 +163,13 @@ class MLPModel:
         self.model = model
         return model
 
+
     def overview(self) -> None:
         """Print a summary of the model architecture."""
         if self.model is None:
             raise ValueError("Model not built. Call build_model() first.")
         self.model.summary()
+
 
     def train(
         self,
@@ -209,6 +221,7 @@ class MLPModel:
         self.history = history
         return history
 
+
     def predict(self, x: Union[np.ndarray, list, tuple]) -> Union[int, np.ndarray]:
         """Predict one or more samples and return class labels.
 
@@ -237,6 +250,7 @@ class MLPModel:
             return int(labels[0])
         return labels
 
+
     def predict_single(self, x: Union[np.ndarray, list, tuple]) -> int:
         """Backward-compatible wrapper around `predict` that returns a single int.
 
@@ -248,6 +262,7 @@ class MLPModel:
         if isinstance(result, np.ndarray):
             return int(result[0])
         return int(result)
+
 
     def evaluate(self,
                  x: Optional[np.ndarray] = None,
@@ -306,6 +321,32 @@ class MLPModel:
 
         plt.tight_layout()
         plt.show()
+
+
+    def export_model(self, filepath: str, prefix: str='mlp_model') -> None:
+        """Save the model to the specified filepath."""
+        if self.model is None:
+            raise ValueError("Model not built or loaded. Call build_model() before export.")
+
+        # ensure directory exists
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+        
+        self.model.save(os.path.join(filepath, f'{prefix}_trained.keras'))
+
+
+    def load_model(self, filepath: str) -> None:
+        """Load a model from the specified filepath."""
+        # ensure file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Model file not found: {filepath}")
+
+        # make sure file is of type .keras
+        if not filepath.endswith('.keras'):
+            raise ValueError("Model file must have a .keras extension.")
+        
+        self.model = keras.models.load_model(filepath)
+        self.history = None  # reset history on load
 
 
 def main():
