@@ -1,0 +1,18 @@
+Evaluations for mlp model:
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.94      0.89      0.91      3646
+           1       0.91      0.95      0.93      4876
+           2       0.89      0.91      0.90       616
+           3       0.87      0.72      0.79        47
+           4       0.89      0.72      0.80       163
+           5       0.84      0.77      0.80       299
+           6       0.92      0.95      0.94       353
+
+    accuracy                           0.92     10000
+   macro avg       0.90      0.84      0.87     10000
+weighted avg       0.92      0.92      0.92     10000
+
+Matthews Correlation: 0.8660469782544884
+
